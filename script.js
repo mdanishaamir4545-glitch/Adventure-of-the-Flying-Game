@@ -1,12 +1,12 @@
 const flowerImages = [
-  "AdventureoftheFlyingGameImageFolderFile/flower1.png",
-  "AdventureoftheFlyingGameImageFolderFile/flower2.png",
-  "AdventureoftheFlyingGameImageFolderFile/flower3.png",
-  "AdventureoftheFlyingGameImageFolderFile/flower4.png",
-  "AdventureoftheFlyingGameImageFolderFile/flower5.png",
-  "AdventureoftheFlyingGameImageFolderFile/flower6.png",
-  "AdventureoftheFlyingGameImageFolderFile/flower7.png",
-  "AdventureoftheFlyingGameImageFolderFile/flower8.png"
+  "flower1.png",
+  "flower2.png",
+  "flower3.png",
+  "flower4.png",
+  "flower5.png",
+  "flower6.png",
+  "flower7.png",
+  "flower8.png"
 ];
 
 const translations = {
@@ -37,11 +37,11 @@ function updateLanguage() {
 }
 
 const sounds = {
-  pop: new Audio("AdventureoftheFlyingGameSoundFolderFile/pop.mp3"),
-  win: new Audio("AdventureoftheFlyingGameSoundFolderFile/win.mp3"),
-  gameover: new Audio("AdventureoftheFlyingGameSoundFolderFile/gameover.mp3"),
-  music: new Audio("AdventureoftheFlyingGameSoundFolderFile/speak.mp3"),
-  music2: new Audio("AdventureoftheFlyingGameSoundFolderFile/speak2.mp3")
+  pop: new Audio("pop.mp3"),
+  win: new Audio("win.mp3"),
+  gameover: new Audio("gameover.mp3"),
+  speak.mp3: new Audio("speak.mp3"),
+  speak2.mp3: new Audio("speak2.mp3")
 };
 
 sounds.music.loop = true;

@@ -9,13 +9,12 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-image: url("background image.jpg");
+  background-image: url("background.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   font-family: sans-serif;
 }
-
 #hud {
   position: absolute;
   top: 12px;
