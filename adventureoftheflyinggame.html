@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Adventure of the Fairy</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-viewport">
+        <div id="heads-up-display">
+            <div class="hud-panel left-group">
+                <button id="open-settings-btn" class="icon-btn" onclick="toggleSettings(true)">Settings</button>
+            </div>
+            <div class="hud-panel right-group">
+                <div><span class="hud-label">Level</span><span id="level" class="hud-value">1</span></div>
+                <div><span class="hud-label">Score</span><span id="score" class="hud-value">0</span></div>
+                <div><span class="hud-label">Lives</span><span id="lives" class="hud-value">5</span></div>
+                <div class="high-score"><span class="hud-label">Best</span><span id="best-score" class="hud-value">0</span></div>
+            </div>
+        </div>
+
+        <div id="play-area"></div>
+
+        <div id="control-dock">
+            <button id="pause-btn" class="ctrl-btn and-pause" onclick="togglePause()">Pause</button>
+            <button id="reset-btn" class="ctrl-btn and-reset" onclick="resetGameEngine()">Reset</button>
+            <button id="exit-btn" class="ctrl-btn and-exit" onclick="exitToMainMenu()">Exit</button>
+        </div>
+    </div>
+
+    <div id="main-menu-overlay" class="menu-overlay active-overlay">
+        <div class="modal-content">
+            <div class="glow-orb"></div>
+            <h1 class="game-title">Adventure of the Fairy</h1>
+            <p class="game-subtitle">Tap bubbles to liberate the captive sprites</p>
+            <div class="menu-btn-group">
+                <button id="start-btn" class="action-sphere" onclick="startGame()">Start Game</button>
+                <button id="settings-main-btn" class="secondary-sphere" onclick="toggleSettings(true)">Settings / سیٹنگز</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-overlay" class="menu-overlay">
+        <div class="modal-content settings-card">
+            <button class="close-cross-btn" onclick="toggleSettings(false)">✕</button>
+            <h2>گیم سیٹنگز / Game Settings</h2>
+            
+            <div class="setting-item">
+                <span class="dual-text">زبان / Language</span>
+                <button class="lang-toggle-lg" onclick="cycleLanguage()">English ⇄ اردو</button>
+            </div>
+            
+            <div class="setting-item">
+                <span class="dual-text">آواز / Sound FX</span>
+                <button id="audio-toggle-btn" class="lang-toggle-lg" onclick="toggleAudio()">Mute / بند کریں</button>
+            </div>
+
+            <div class="settings-divider"></div>
+            <h3>ڈیٹا مینجمنٹ / Data Management</h3>
+
+            <div class="setting-grid-btns">
+                <button class="menu-action-btn and-save" onclick="saveGameData()">Save State</button>
+                <button class="menu-action-btn and-load" onclick="loadGameData()">Load State</button>
+                <button class="menu-action-btn and-reset" onclick="resetHighScore()">Reset Best</button>
+                <button class="menu-action-btn and-clear" onclick="clearData()">Wipe Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
