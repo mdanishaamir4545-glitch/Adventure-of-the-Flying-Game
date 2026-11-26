@@ -40,8 +40,8 @@ const sounds = {
   pop: new Audio("pop.mp3"),
   win: new Audio("win.mp3"),
   gameover: new Audio("gameover.mp3"),
-  speak.mp3: new Audio("speak.mp3"),
-  speak2.mp3: new Audio("speak2.mp3")
+  music: new Audio("speak.mp3"),
+  music2: new Audio("speak2.mp3")
 };
 
 sounds.music.loop = true;
@@ -207,6 +207,7 @@ document.getElementById('start-btn').onclick = () => {
   document.getElementById('score').textContent = score;
   document.getElementById('lives').textContent = lives;
   document.getElementById('level').textContent = "1";
+  document.getElementById('timer').textContent = "0s";
 
   playContinuousMusic(1);
 
@@ -222,6 +223,7 @@ document.getElementById('start-btn').onclick = () => {
   gameTimer = setInterval(() => {
     if (isRunning) {
       secondsElapsed++;
+      document.getElementById('timer').textContent = secondsElapsed + "s";
     }
   }, 1000);
 };
