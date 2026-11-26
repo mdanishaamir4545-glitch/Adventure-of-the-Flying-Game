@@ -9,13 +9,43 @@ let savedScore = Number(localStorage.getItem("fairyGame_SavedScore")) || 0;
 const sounds = {
     pop: new Audio("pop.mp3"),
     win: new Audio("win.mp3"),
-    gameover: new Audio("gameover.mp3")
+    gameover: new Audio("gameover.mp3"),
+    music: new Audio("speak.mp3"),
+    music2: new Audio("speak2.mp3")
 };
 
 function playSound(soundObj) {
     if (isMuted) return;
     soundObj.currentTime = 0;
     soundObj.play().catch(() => {});
+}
+
+sounds.music.loop = true;
+sounds.music2.loop = true;
+
+let gameTimer = null, secondsElapsed = 0, currentMusicLevel = 0;
+
+function stopBackgroundMusic() {
+    [sounds.music, sounds.music2].forEach(track => {
+        track.pause();
+        track.currentTime = 0;
+    });
+}
+
+// speak.mp3 plays on levels 1-10, 21-30, ...; speak2.mp3 on levels 11-20, 31-40, ...
+function playContinuousMusic(level) {
+    currentMusicLevel = level;
+    stopBackgroundMusic();
+    const track = Math.floor((level - 1) / 10) % 2 === 0 ? sounds.music : sounds.music2;
+    playSound(track);
+}
+
+function updateTimerDisplay() {
+    document.getElementById('timer').textContent = secondsElapsed + "s";
+}
+
+function clearFairies() {
+    playArea.querySelectorAll('.fairy-container, .particle').forEach(el => el.remove());
 }
 
 function updateScoreDisplay() {
@@ -82,6 +112,11 @@ function spawnFairy() {
         score += 10;
         flowersPoppedTotal++;
         updateScoreDisplay();
+
+        const newLevel = Math.floor(flowersPoppedTotal / 10) + 1;
+        if (Math.floor((newLevel - 1) / 10) !== Math.floor((currentMusicLevel - 1) / 10)) {
+            playContinuousMusic(newLevel);
+        }
         
         if (score > highScore) {
             highScore = score;
@@ -101,23 +136,42 @@ function spawnFairy() {
 function handleGameOver() {
     isRunning = false;
     clearInterval(spawnInterval);
+    clearInterval(gameTimer);
+    clearFairies();
+    stopBackgroundMusic();
     playSound(sounds.gameover);
-    alert("Game Over! Your final score: " + score);
+    alert("Game Over! Your final score: " + score + " | Time survived: " + secondsElapsed + "s");
     resetGame();
 }
 
 function resetGame() {
-    score = 0; lives = 5; flowersPoppedTotal = 0;
-    updateScoreDisplay();
-    document.getElementById('lives').textContent = lives;
+    resetRoundState();
     document.getElementById('overlay').classList.add('visible');
 }
 
+function resetRoundState() {
+    score = 0; lives = 5; flowersPoppedTotal = 0; secondsElapsed = 0;
+    updateScoreDisplay();
+    updateTimerDisplay();
+    document.getElementById('lives').textContent = lives;
+    document.getElementById('level').textContent = "1";
+}
+
 document.getElementById('start-btn').onclick = () => {
+    clearFairies();
+    clearInterval(spawnInterval);
+    clearInterval(gameTimer);
+    resetRoundState();
     isRunning = true;
     document.getElementById('overlay').classList.remove('visible');
-    resetGame();
+    playContinuousMusic(1);
     spawnInterval = setInterval(spawnFairy, 1200);
+    gameTimer = setInterval(() => {
+        if (isRunning) {
+            secondsElapsed++;
+            updateTimerDisplay();
+        }
+    }, 1000);
 };
 
 document.getElementById('save-btn').onclick = () => {
@@ -147,6 +201,11 @@ document.getElementById('reset-btn').onclick = () => {
 document.getElementById('mute-btn').onclick = () => {
     isMuted = !isMuted;
     document.getElementById('mute-btn').textContent = isMuted ? "Unmute Sound" : "Mute Sound";
+    if (isMuted) {
+        stopBackgroundMusic();
+    } else if (isRunning) {
+        playContinuousMusic(Math.floor(flowersPoppedTotal / 10) + 1);
+    }
 };
 
 document.getElementById('clear-btn').onclick = () => {
