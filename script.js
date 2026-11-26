@@ -1,229 +1,222 @@
-const flowerImages = [
-  "flower1.png",
-  "flower2.png",
-  "flower3.png",
-  "flower4.png",
-  "flower5.png",
-  "flower6.png",
-  "flower7.png",
-  "flower8.png"
-];
+const flowerImages = ["flower1.png", "flower2.png", "flower3.png", "flower4.png", "flower5.png", "flower6.png", "flower7.png", "flower8.png"];
+const playArea = document.getElementById("play-area");
+let score = 0, lives = 5, isRunning = false, isMuted = false;
+let spawnInterval = null, flowersPoppedTotal = 0;
 
-const translations = {
-  en: { level: "Level", score: "Score", lives: "Lives", title: "Adventure of the Fairy", msg: "Pop bubbles to free fairies!", start: "Start Game", over: "Game Over!" },
-  ur: { level: "لیول", score: "اسکور", lives: "زندگیاں", title: "فلائنگ فیری", msg: "فیری آزاد کرنے کے لیے بلبلے پھوڑیں!", start: "کھیل شروع کریں", win: "آپ جیت گئے!", over: "گیم اوور!" },
-  hi: { level: "स्तर", score: "स्कोर", lives: "जान", title: "एडवेंचर ऑफ द फेयरी", msg: "बुलबुले फोड़ें!", start: "खेल शुरू करें", over: "खेल खत्म!" }
-};
-
-let currentLang = 'en';
-const langToggle = document.getElementById('lang-toggle');
-
-langToggle.addEventListener('click', () => {
-  const langs = ['en', 'ur', 'hi'];
-  let nextIndex = (langs.indexOf(currentLang) + 1) % langs.length;
-  currentLang = langs[nextIndex];
-  document.documentElement.dir = currentLang === 'ur' ? 'rtl' : 'ltr';
-  updateLanguage();
-});
-
-function updateLanguage() {
-  const t = translations[currentLang];
-  document.querySelectorAll('[data-key]').forEach(el => {
-    el.textContent = t[el.getAttribute('data-key')];
-  });
-  document.getElementById('modal-title').textContent = t.title;
-  document.getElementById('modal-message').textContent = t.msg;
-  document.getElementById('start-btn').textContent = t.start;
-}
+let highScore = Number(localStorage.getItem("fairyGame_HighScore")) || 0;
+let savedScore = Number(localStorage.getItem("fairyGame_SavedScore")) || 0;
 
 const sounds = {
-  pop: new Audio("pop.mp3"),
-  win: new Audio("win.mp3"),
-  gameover: new Audio("gameover.mp3"),
-  music: new Audio("speak.mp3"),
-  music2: new Audio("speak2.mp3")
+    pop: new Audio("pop.mp3"),
+    win: new Audio("win.mp3"),
+    gameover: new Audio("gameover.mp3"),
+    music: new Audio("speak.mp3"),
+    music2: new Audio("speak2.mp3")
 };
+
+function playSound(soundObj) {
+    if (isMuted) return;
+    soundObj.currentTime = 0;
+    soundObj.play().catch(() => {});
+}
 
 sounds.music.loop = true;
 sounds.music2.loop = true;
 
-function playSound(soundObj) {
-  soundObj.currentTime = 0;
-  soundObj.play().catch(() => {});
-}
-
-function stopSound(soundObj) {
-  soundObj.pause();
-  soundObj.currentTime = 0;
-}
+let gameTimer = null, secondsElapsed = 0, currentMusicLevel = 0;
 
 function stopBackgroundMusic() {
-  stopSound(sounds.music);
-  stopSound(sounds.music2);
+    [sounds.music, sounds.music2].forEach(track => {
+        track.pause();
+        track.currentTime = 0;
+    });
 }
 
+// speak.mp3 plays on levels 1-10, 21-30, ...; speak2.mp3 on levels 11-20, 31-40, ...
 function playContinuousMusic(level) {
-  stopBackgroundMusic();
-  if (Math.floor((level - 1) / 10) % 2 === 0) {
-    playSound(sounds.music);
-  } else {
-    playSound(sounds.music2);
-  }
+    currentMusicLevel = level;
+    stopBackgroundMusic();
+    const track = Math.floor((level - 1) / 10) % 2 === 0 ? sounds.music : sounds.music2;
+    playSound(track);
 }
 
-const playArea = document.getElementById("play-area");
-let score = 0, lives = 5, isRunning = false;
-let spawnInterval = null;
-let flowersPoppedTotal = 0;
-let gameTimer = null;
-let secondsElapsed = 0;
-
-function createParticleBurst(x, y) {
-  for (let i = 0; i < 8; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.left = `${x}px`;
-    p.style.top = `${y}px`;
-    const angle = Math.random() * Math.PI * 2;
-    const velocity = 50 + Math.random() * 50;
-    p.style.setProperty('--vx', `${Math.cos(angle) * velocity}px`);
-    p.style.setProperty('--vy', `${Math.sin(angle) * velocity}px`);
-    playArea.appendChild(p);
-    setTimeout(() => p.remove(), 500);
-  }
+function updateTimerDisplay() {
+    document.getElementById('timer').textContent = secondsElapsed + "s";
 }
 
 function clearFairies() {
-  const fairies = document.querySelectorAll('.fairy-container, .particle');
-  fairies.forEach(fairy => fairy.remove());
+    playArea.querySelectorAll('.fairy-container, .particle').forEach(el => el.remove());
+}
+
+function updateScoreDisplay() {
+    document.getElementById('score').textContent = score;
+    document.getElementById('best-score').textContent = highScore;
+}
+
+function createParticleBurst(x, y) {
+    for (let i = 0; i < 12; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 60 + Math.random() * 60;
+        p.style.setProperty('--vx', `${Math.cos(angle) * velocity}px`);
+        p.style.setProperty('--vy', `${Math.sin(angle) * velocity}px`);
+        playArea.appendChild(p);
+        setTimeout(() => p.remove(), 600);
+    }
 }
 
 function spawnFairy() {
-  if (!isRunning) return;
+    if (!isRunning) return;
+    const currentLevel = Math.floor(flowersPoppedTotal / 10) + 1;
+    document.getElementById('level').textContent = currentLevel;
+    const speed = Math.min(14, 2.5 + (flowersPoppedTotal * 0.05));
 
-  const currentLevel = Math.floor(flowersPoppedTotal / 10) + 1;
-  document.getElementById('level').textContent = currentLevel;
+    const container = document.createElement("div");
+    container.className = "fairy-container";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble-animation";
+    
+    const flower = document.createElement("img");
+    flower.src = flowerImages[flowersPoppedTotal % flowerImages.length];
+    flower.style.width = "100%";
+    flower.style.height = "100%";
 
-  const speed = Math.min(12, 2 + (flowersPoppedTotal * 0.05));
-  const pointsEarned = 10 + Math.floor(flowersPoppedTotal * 2);
+    container.appendChild(bubble);
+    container.appendChild(flower);
 
-  const container = document.createElement("div");
-  container.className = "fairy-container";
+    const x = Math.max(10, Math.floor(Math.random() * (playArea.clientWidth - 100)));
+    container.style.left = `${x}px`;
+    let y = playArea.clientHeight;
 
-  const bubble = document.createElement("div");
-  bubble.className = "bubble-animation";
+    const move = setInterval(() => {
+        if (!isRunning) { clearInterval(move); return; }
+        y -= speed;
+        container.style.bottom = `${playArea.clientHeight - y}px`;
+        if (y < -100) {
+            clearInterval(move);
+            container.remove();
+            lives--;
+            document.getElementById('lives').textContent = lives;
+            if (lives <= 0) handleGameOver();
+        }
+    }, 20);
 
-  const imgName = flowerImages[flowersPoppedTotal % flowerImages.length];
-  const flower = document.createElement("img");
-  flower.src = imgName;
-  flower.style.width = "100%";
-  flower.style.height = "100%";
-  flower.style.objectFit = "contain";
+    container.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        if (!isRunning) return;
+        clearInterval(move);
+        playSound(sounds.pop);
+        score += 10;
+        flowersPoppedTotal++;
+        updateScoreDisplay();
 
-  const randomHue = Math.floor(Math.random() * 360);
-  flower.style.filter = `hue-rotate(${randomHue}deg)`;
+        const newLevel = Math.floor(flowersPoppedTotal / 10) + 1;
+        if (Math.floor((newLevel - 1) / 10) !== Math.floor((currentMusicLevel - 1) / 10)) {
+            playContinuousMusic(newLevel);
+        }
+        
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("fairyGame_HighScore", highScore);
+        }
 
-  container.appendChild(bubble);
-  container.appendChild(flower);
+        const rect = container.getBoundingClientRect();
+        const areaRect = playArea.getBoundingClientRect();
+        createParticleBurst(rect.left - areaRect.left + rect.width/2, rect.top - areaRect.top + rect.height/2);
 
-  const x = Math.max(10, Math.floor(Math.random() * (playArea.clientWidth - 100)));
-  container.style.left = `${x}px`;
-  let y = playArea.clientHeight;
-  let isPopped = false;
-
-  container.addEventListener("pointerdown", (e) => {
-    e.stopPropagation();
-    if (!isRunning || isPopped) return;
-    isPopped = true;
-    playSound(sounds.pop);
-
-    score += pointsEarned;
-    flowersPoppedTotal++;
-    document.getElementById('score').textContent = score;
-
-    const newLevel = Math.floor(flowersPoppedTotal / 10) + 1;
-    if (newLevel !== currentLevel) {
-      playContinuousMusic(newLevel);
-    }
-
-    const rect = container.getBoundingClientRect();
-    const areaRect = playArea.getBoundingClientRect();
-    createParticleBurst(rect.left - areaRect.left + rect.width / 2, rect.top - areaRect.top + rect.height / 2);
-
-    container.remove();
-  });
-
-  playArea.appendChild(container);
-
-  const move = setInterval(() => {
-    if (!isRunning || isPopped) {
-      clearInterval(move);
-      return;
-    }
-    y -= speed;
-    container.style.bottom = `${playArea.clientHeight - y}px`;
-    if (y < -100) {
-      clearInterval(move);
-      if (!isPopped) {
         container.remove();
-        lives--;
-        document.getElementById('lives').textContent = lives;
-        if (lives <= 0) handleGameOver();
-      }
-    }
-  }, 20);
+    });
+
+    playArea.appendChild(container);
 }
 
 function handleGameOver() {
-  isRunning = false;
-  clearInterval(spawnInterval);
-  clearInterval(gameTimer);
-  clearFairies();
-  stopBackgroundMusic();
-  playSound(sounds.gameover);
-  alert(translations[currentLang].over + " Time survived: " + secondsElapsed + "s");
-  resetGame();
+    isRunning = false;
+    clearInterval(spawnInterval);
+    clearInterval(gameTimer);
+    clearFairies();
+    stopBackgroundMusic();
+    playSound(sounds.gameover);
+    alert("Game Over! Your final score: " + score + " | Time survived: " + secondsElapsed + "s");
+    resetGame();
 }
 
 function resetGame() {
-  score = 0;
-  lives = 5;
-  flowersPoppedTotal = 0;
-  secondsElapsed = 0;
-  document.getElementById('score').textContent = score;
-  document.getElementById('lives').textContent = lives;
-  document.getElementById('level').textContent = "1";
-  document.getElementById('overlay').classList.add('visible');
+    resetRoundState();
+    document.getElementById('overlay').classList.add('visible');
+}
+
+function resetRoundState() {
+    score = 0; lives = 5; flowersPoppedTotal = 0; secondsElapsed = 0;
+    updateScoreDisplay();
+    updateTimerDisplay();
+    document.getElementById('lives').textContent = lives;
+    document.getElementById('level').textContent = "1";
 }
 
 document.getElementById('start-btn').onclick = () => {
-  clearFairies();
-  isRunning = true;
-  document.getElementById('overlay').classList.remove('visible');
-  score = 0;
-  lives = 5;
-  flowersPoppedTotal = 0;
-  secondsElapsed = 0;
-  document.getElementById('score').textContent = score;
-  document.getElementById('lives').textContent = lives;
-  document.getElementById('level').textContent = "1";
-  document.getElementById('timer').textContent = "0s";
-
-  playContinuousMusic(1);
-
-  if (spawnInterval) clearInterval(spawnInterval);
-  if (gameTimer) clearInterval(gameTimer);
-
-  spawnInterval = setInterval(() => {
-    if (isRunning) {
-      spawnFairy();
-    }
-  }, 1200);
-
-  gameTimer = setInterval(() => {
-    if (isRunning) {
-      secondsElapsed++;
-      document.getElementById('timer').textContent = secondsElapsed + "s";
-    }
-  }, 1000);
+    clearFairies();
+    clearInterval(spawnInterval);
+    clearInterval(gameTimer);
+    resetRoundState();
+    isRunning = true;
+    document.getElementById('overlay').classList.remove('visible');
+    playContinuousMusic(1);
+    spawnInterval = setInterval(spawnFairy, 1200);
+    gameTimer = setInterval(() => {
+        if (isRunning) {
+            secondsElapsed++;
+            updateTimerDisplay();
+        }
+    }, 1000);
 };
+
+document.getElementById('save-btn').onclick = () => {
+    savedScore = score;
+    localStorage.setItem("fairyGame_SavedScore", savedScore);
+    alert("Progress Saved Successfully! Score: " + savedScore);
+};
+
+document.getElementById('load-btn').onclick = () => {
+    const backup = localStorage.getItem("fairyGame_SavedScore");
+    if (backup !== null) {
+        score = Number(backup);
+        updateScoreDisplay();
+        alert("Backup Loaded! Resuming from score: " + score);
+    } else {
+        alert("No backup found!");
+    }
+};
+
+document.getElementById('reset-btn').onclick = () => {
+    highScore = 0;
+    localStorage.removeItem("fairyGame_HighScore");
+    updateScoreDisplay();
+    alert("High Score Reset!");
+};
+
+document.getElementById('mute-btn').onclick = () => {
+    isMuted = !isMuted;
+    document.getElementById('mute-btn').textContent = isMuted ? "Unmute Sound" : "Mute Sound";
+    if (isMuted) {
+        stopBackgroundMusic();
+    } else if (isRunning) {
+        playContinuousMusic(Math.floor(flowersPoppedTotal / 10) + 1);
+    }
+};
+
+document.getElementById('clear-btn').onclick = () => {
+    if (confirm("Are you sure you want to delete all game data?")) {
+        localStorage.clear();
+        highScore = 0;
+        savedScore = 0;
+        score = 0;
+        updateScoreDisplay();
+        alert("All Data Wiped Clean!");
+    }
+};
+
+window.onload = updateScoreDisplay;

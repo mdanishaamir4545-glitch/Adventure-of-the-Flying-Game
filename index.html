@@ -1,27 +1,38 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
-  <title>Adventure of the Fairy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventure of the Fairy</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="overlay" class="visible">
-    <h1 id="modal-title">Adventure of the Fairy</h1>
-    <p id="modal-message">Pop bubbles to free fairies!</p>
-    <button id="start-btn">Start Game</button>
-    <button id="lang-toggle">EN / UR / HI</button>
-  </div>
+    <div id="game-container">
+        <header>
+            <div>Level: <span id="level">1</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Time: <span id="timer">0s</span></div>
+            <div>Lives: <span id="lives">5</span></div>
+            <div>Best: <span id="best-score">0</span></div>
+        </header>
 
-  <div id="hud">
-    <div><span data-key="level">Level</span>: <span id="level">1</span></div>
-    <div><span data-key="score">Score</span>: <span id="score">0</span></div>
-    <div>Time: <span id="timer">0s</span></div>
-    <div><span data-key="lives">Lives</span>: <span id="lives">5</span></div>
-  </div>
+        <div id="play-area"></div>
 
-  <div id="play-area"></div>
+        <footer>
+            <button id="save-btn" class="btn save">Save Data</button>
+            <button id="load-btn" class="btn load">Load Backup</button>
+            <button id="reset-btn" class="btn reset">Reset HighScore</button>
+            <button id="mute-btn" class="btn mute">Mute Sound</button>
+            <button id="clear-btn" class="btn clear">Clear All Data</button>
+        </footer>
+    </div>
+
+    <div id="overlay" class="visible">
+        <h1 id="modal-title">Adventure of the Fairy</h1>
+        <p id="modal-message">Pop bubbles to free fairies!</p>
+        <button id="start-btn" class="btn start">Start Game</button>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
